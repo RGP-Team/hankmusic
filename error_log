@@ -1,0 +1,2 @@
+[23-Feb-2017 10:29:58 America/Los_Angeles] PHP Fatal error:  Class 'App\Http\Controllers\User' not found in /home/rgpacific1/hank-music/hank/app/Http/Controllers/HomeController.php on line 41
+[23-Feb-2017 10:30:21 America/Los_Angeles] PHP Fatal error:  Class 'App\Http\Controllers\User' not found in /home/rgpacific1/hank-music/hank/app/Http/Controllers/HomeController.php on line 41

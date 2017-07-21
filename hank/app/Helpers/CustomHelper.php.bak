@@ -1,0 +1,144 @@
+<?php 
+namespace App\Helpers;
+
+use DateTime;
+use Mail;
+
+class CustomHelper {
+
+    /**
+     * Returns a time ago format out from a datetime string.
+     *
+     * @param $datetime
+     * @param bool $full
+     * @return string
+     */
+    public static function show_elapsed_time($datetime, $full = false) {
+		$now = new DateTime();
+		$ago = new DateTime($datetime);
+		$diff = $now->diff($ago);
+
+		$diff->w = floor($diff->d / 7);
+		$diff->d -= $diff->w * 7;
+
+		$string = array(
+			'y' => 'year',
+			'm' => 'month',
+			'w' => 'week',
+			'd' => 'day',
+			'h' => 'hour',
+			'i' => 'minute',
+			's' => 'second',
+		);
+		foreach ($string as $k => &$v) {
+			if ($diff->$k) {
+				$v = $diff->$k . ' ' . $v . ($diff->$k > 1 ? 's' : '');
+			} else {
+				unset($string[$k]);
+			}
+		}
+
+		if (!$full) $string = array_slice($string, 0, 1);
+		return $string ? implode(', ', $string) . ' ago' : 'just now';
+	}
+	
+	public static function validateRequired($source, $exempt = array())
+	{
+		$errors = array();
+		foreach($source as $key => $value)
+		{
+			if (array_search($key, $exempt) === false)
+			{
+				if (empty($value)) $errors []= (object)array('message' => "The {$key} field is required.",
+															 'value' => $value);
+			}
+		}
+		
+		return $errors;
+	}
+	
+	public static function getMutualFriendsCount($user_id, $logged_in_id)
+	{
+		$friends = \App\Models\Friend::where('user_id', $user_id)->get()->where('friend_id', $logged_in_id);
+		
+		return $friends->count();
+	}
+	
+	public static function isFriendWith($user_id, $logged_in_id)
+	{
+		$friends = \App\Models\Friend::where('user_id', $user_id)->where('friend_id', $logged_in_id);
+		
+		return ($friends->count()) ? true : false;
+	}
+	
+	public static function totalComments($subtopic_id)
+	{
+		$total = 0;
+		
+		$subtopic = \App\Models\Category::find($subtopic_id);
+		foreach($subtopic->posts as $post)
+		{
+			$total += $post->total_comments->count();
+		}
+		
+		return $total;
+	}
+	
+	public static function lang($key, $is_category = false)
+	{
+		$settings = \App\Models\Setting::find(1);
+		$default_language = $settings->default_language;
+	
+		if ($is_category)
+		{
+			$category = \App\Models\Category::find($key);
+			return ($category && !empty($category[$default_language])) ? $category[$default_language] : $category['name'];
+		}
+			
+		$lang = \App\Models\Language::where('keyword', $key)->first();
+		$lang_en = (! empty($lang['en'])) ? $lang['en'] : $lang['_default'];
+		
+		return ($lang && !empty($lang[$default_language])) ? $lang[$default_language] : $lang_en;
+	}
+	
+	public static function checkPageLimit()
+	{
+		$settings = \App\Models\Setting::find(1);
+
+		$user_id = \Auth::user()->id;
+		$page_limit = \Auth::user()->page_limit;
+		$items_per_page = $settings->items_per_page;
+		
+		$total = 0;
+		$total += \App\Models\Friend::where('user_id', $user_id)->get()->count();
+		$total += \App\Models\Photo::where('user_id', $user_id)->get()->count();
+		$total += \App\Models\Video::where('user_id', $user_id)->get()->count();
+		$total += \App\Models\Artwork::where('user_id', $user_id)->get()->count();
+		$total += \App\Models\Article::where('user_id', $user_id)->get()->count();
+		
+		$consumed_page = intval($total / (int)$items_per_page);
+		$extra_items = $total % (int)$items_per_page;
+		$remaining_slot = ((int)$page_limit * (int)$items_per_page) - (($consumed_page * (int)$items_per_page) + $extra_items);
+		
+		$remaining_slot = ($remaining_slot < 0) ? 0 : $remaining_slot;
+		return array("consumed_page" => $consumed_page,
+					 "extra_items" => $extra_items,
+					 "remaining_slot" => $remaining_slot);	
+	}
+	
+	public static function sendVerificationEmail($id)
+	{
+		$user = \App\User::findOrFail($id);
+		if ($user)
+		{	
+			Mail::send('emails.verification', ['user' => $user], function ($message) use ($user) {
+					$name = $user->first_name . " " . $user->last_name;
+					
+					$message->from(env('MAIL_FROM_EMAIL'), env('MAIL_FROM_NAME'));
+					$message->to($user->email, $name )->subject(CustomHelper::lang('lang-email-verification-subject'));
+					$message->getSwiftMessage();
+			});
+		}
+	}
+	
+}

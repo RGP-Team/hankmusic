@@ -1,0 +1,63 @@
+div#nav ul li { float: left; }
+
+div#nav ul li a,
+div#nav ul li span {
+  display: block;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-transition-duration: .3s;
+  transition-duration: .3s;
+}
+
+div#nav ul li a:hover,
+div#nav ul li span:hover { 
+	background: #ED5565; 
+	color: #fff!important;
+}
+
+div#nav ul li.more {
+  width: 3em;
+  text-align: center;
+  display: none;
+}
+
+div#nav ul li.more:hover ul#overflow {
+  opacity: 1;
+  visibility: visible;
+}
+
+div#nav #overflow {
+  opacity: 0;
+  position: absolute;
+  left:0;
+  text-align: left;
+  -webkit-transition-duration: .3s;
+  transition-duration: .3s;
+  margin-left:0;
+  list-style: none;
+  z-index: 9999;
+  padding: 5px 10px;
+  background: #ccc;
+}
+
+div#nav #overflow li { 
+	float: none; 
+	margin-bottom: 5px;
+	color: #333;
+}
+
+div#nav #overflow li a {
+  white-space: nowrap;
+  color: #555!important;
+}
+
+div#nav #overflow li a:hover { 
+	color: #ED5565!important;
+	background: #ccc!important;
+}
+
+div#nav ul#overflow {
+	width: 180px;
+    margin-left: -138px;
+}
